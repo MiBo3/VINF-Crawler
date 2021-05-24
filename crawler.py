@@ -1,12 +1,12 @@
-from bs4 import BeautifulSoup
-from selenium import webdriver
 import re
 import os
-from time import sleep
 import requests
 import multiprocessing as mp
 import queue
 import json
+
+from time import sleep
+from bs4 import BeautifulSoup
 
 
 def save_page(html, id):
@@ -84,6 +84,7 @@ def extract_book_info(html):
     annotation = soup.find('section', {'id': 'description'}).find('div', {'class': 'cms-article'}).text.strip()
     annotation = annotation.replace('\n', '')
     ret['Anotácia'] = annotation
+
     return json.dumps(ret, sort_keys=True, indent=2)
 
 
@@ -113,13 +114,11 @@ def find_links(html):
 
 
 def is_book(soup):
-    ret = re.search("Knihy", soup.text)
-    return ret
+    return re.search("Knihy", soup.text)
 
 
 def is_slovak(soup):
-    ret = re.search("slovenský", soup.text)
-    return ret
+    return re.search("slovenský", soup.text)
 
 
 def is_slovak_book(html):
@@ -127,6 +126,7 @@ def is_slovak_book(html):
     breadcrumbs = soup.find("section", {"class": "section--breadcrumbs"})
     categories = soup.find("section", {"id": "details"})
     return breadcrumbs is not None and categories is not None and is_book(breadcrumbs) is not None and is_slovak(categories) is not None
+
 
 def saved_files():
     file_names = os.listdir('./pages/')
@@ -161,30 +161,11 @@ def crawl():
             link_queue.put(new_links)
     except Exception as e:
         print('Slave Error:', e)
+
     return 0
 
 
-def scrape():
-    # get file names
-    file_names = os.listdir('./pages/')
-
-    # setup Selenium due to JavaScript
-    options = webdriver.firefox.options.Options()
-    options.headless = True
-    driver = webdriver.Firefox(options=options)
-    driver.set_window_size(1920, 1080)
-
-    for name in file_names:
-        html_file = os.getcwd() + "//pages/{name}".format(name=name)
-        driver.get("file:///{file}".format(file=html_file))
-        info = extract_book_info(driver.find_element_by_xpath('//html').get_attribute('innerHTML'))
-        print(info)
-        return
-
-
 if __name__ == '__main__':
-    scrape()
-    """
     url = 'https://www.martinus.sk/'
     source = requests.get(url).text
     explored = saved_files()
@@ -223,4 +204,3 @@ if __name__ == '__main__':
 
     end.value = True
     process_pool.terminate()
-    """
